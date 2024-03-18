@@ -1,0 +1,75 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Time Series Analysis
+
+This project is intended to analyse a time series using Meta's Prophet Forecasting system which is available to be utilised in R. I intend to analyse an inbuilt time series in R called the classic Box and Jenkins airline data which contains data about how many international monthly passengers the airline has.
+
+```{r fig.align="center", echo=FALSE}
+# Fit linear regression model
+lm_model <- lm(AirPassengers ~ time(AirPassengers))
+plot(AirPassengers,xlab="Year",ylab="Number of passengers (in thousands)")
+# Add line of best fit
+abline(lm_model, col = "red")
+intercept <- coef(lm_model)[1]
+slope <- coef(lm_model)[2]
+line_eq <- paste("y =", round(slope, 2), "* x +", round(intercept, 2))
+```
+
+```{=html}
+<center>In the above graph, the historic data of the airline is plotted from 1949-1960 with a regression line going through</center>
+```
+The graph highlights that yearly there had been a steady increase in number of passengers. Despite this steady increase yearly, there are many instances of monthly passengers decreasing significantly. This can more than likely be attributed to the fact that the travel/tourism industry takes a significant hit during times in which the majority of the population is in work or school. Therefore meaning that summer time (the middle of each year), should result in having the most monthly passengers which is reflected within this time series data set.
+
+The equation of the line of best fit is $y=31.89x-62055$ which has been calculated by using R code to analyse the regression line. The gradient $31.89x$ suggests that yearly the airline saw 31,890 more passengers monthly as the gradient is positive.
+
+Using the above information calculated thus far, a graph can be formed which contains future predicted data using the already provided data.
+
+```{r fig.align="center", echo=FALSE}
+# Convert data from Air Passengers into a data frame with year on the x axis and number of passengers on the y axis
+airpass.df = data.frame(
+  ds=zoo::as.yearmon(time(AirPassengers)), 
+  y=AirPassengers)
+
+# Create a model using prophet using the Air Passengers data frame
+apmodel = prophet::prophet(airpass.df,weekly.seasonality=TRUE,daily.seasonality=TRUE)
+
+# Create a data frame for future predictions using the prophet model which goes 20 quarters into the futute (5 years)
+apfuture = prophet::make_future_dataframe(apmodel, periods=20, freq="quarter")
+
+# Run the predict function using data from the Air Passengers dataframe and the future data frame created by using the prophet model
+predict = predict(apmodel, apfuture)
+
+# Plot and label the data and predictions
+plot(apmodel,predict,xlab="Year",ylab="Number of passengers (in thousands)")
+```
+
+```{=html}
+<center>Using R in coallition with Prophet to forecast the future monthly passengers, the graph above is created</center>
+```
+The graph above uses predicted data over the 5 years after the observed data is recorded to continue the previous graph further. The above graph also follows the seasonality found in all of the historical data as well as following the regression line in order to produce a fairly accurate prediction for the future monthly passengers for the airline. Despite this, the graph does not seem to be completely accurate as over time, the amount of monthly passengers midyear appeared to be growing at an increasing rate. However, in the predicted data, this trend isn't apparent therefore making the above graph seem more and more inaccurate.
+
+```{=html}
+<center>In the below graph, the above trend graph is extended to 10 years after the observed data stopped being recorded</center>
+```
+```{r fig.align="center", echo=FALSE}
+# Convert data from Air Passengers into a data frame with year on the x axis and number of passengers on the y axis
+airpass.df = data.frame(
+  ds=zoo::as.yearmon(time(AirPassengers)), 
+  y=AirPassengers)
+
+# Create a model using prophet using the Air Passengers data frame
+apmodel = prophet::prophet(airpass.df,weekly.seasonality=TRUE,daily.seasonality=TRUE)
+
+# Create a data frame for future predictions using the prophet model which goes 40 quarters into the futute (10 years)
+apfuture = prophet::make_future_dataframe(apmodel, periods=40, freq="quarter")
+
+# Run the predict function using data from the Air Passengers dataframe and the future data frame created by using the prophet model
+predict = predict(apmodel, apfuture)
+
+# Plot and label the data and predictions
+plot(apmodel,predict,xlab="Year",ylab="Number of passengers (in thousands)")
+```
+After creating the above graph, it is evident to see that the predicted model becomes more and more inaccurate as time progresses due to the fact that in the year 1949, the highest value recorded of monthly airline passengers was approximately 200,000. After 10 years, the highest recorded value was 500,000. Therefore, a multiplicative rate of 2.5 of peak monthly passengers every 10 years can be approximated. Using this approximation, one would assume that in 1969, the peak amount of monthly passengers would be around 1.25 million. However, this is not the case, therefore highlighting the importance of a more suitable model being required for long term predictions. Despite this, due to the sample size of data only being over 11 years, it is difficult to accurately predict what the future amount of passengers would have been without thorough analysis.
+
+Overall, using Meta's Prophet Forecasting system seems to be fairly accurate for predicting future data values. The system seems to be fairly accurate in maintaining a reasonable regression line as well as seasonality. Despite this however, it should only be used to predict future values which are near as the values tend to lose accuracy as time progresses.
